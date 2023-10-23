@@ -1,8 +1,7 @@
 from tkinter import *
-from tkinter.messagebox import showerror, showinfo
+from tkinter.messagebox import showerror, showinfo, askokcancel
 from tkinter.scrolledtext import ScrolledText
 from pymongo import MongoClient
-from tkinter.messagebox import *
 
 def create_todo_list():
     create.deiconify()
@@ -76,13 +75,46 @@ def delete_to_do():
         if (taskno == "") or (not taskno.isdigit()):
             showerror("Issue", "Enter only a number for the task number")
             Task_1_Delete_Entry.delete(0, END)
-            Task_1_Delete_Entry.focus()
+            Task_1_Delete_Entry focus()
             return
 
         coll.delete_one({"_t_no": taskno})
         showinfo("Success", "To-Do List item deleted")
         Task_1_Delete_Entry.delete(0, END)
         Task_1_Delete_Entry.focus()
+
+    except Exception as e:
+        showerror("Issue", e)
+    finally:
+        if con is not None:
+            con.close()
+
+def update_to_do():
+    con = None
+    try:
+        con = MongoClient("localhost", 27017)
+        db = con["ToDo"]
+        coll = db["ToDo"]
+        taskno = Task_1_Update_Entry.get()
+        updated_task = Updated_Task_Entry.get()
+
+        if (taskno == "") or (not taskno.isdigit()):
+            showerror("Issue", "Enter only a number for the task number")
+            Task_1_Update_Entry.delete(0, END)
+            Task_1_Update_Entry.focus()
+            return
+
+        if updated_task == "":
+            showerror("Issue", "Updated task description cannot be empty")
+            Updated_Task_Entry.delete(0, END)
+            Updated_Task_Entry.focus()
+            return
+
+        coll.update_one({"_t_no": taskno}, {"$set": {"task": updated_task}})
+        showinfo("Success", "To-Do List item updated")
+        Task_1_Update_Entry.delete(0, END)
+        Updated_Task_Entry.delete(0, END)
+        Task_1_Update_Entry.focus()
 
     except Exception as e:
         showerror("Issue", e)
@@ -150,24 +182,28 @@ def back3():
     update.withdraw()
     root.deiconify()
 
-Task_1_Delete_Label = Label(update, text="Enter the task number to delete:", font=f)
-Task_1_Delete_Entry = Entry(update, font=f)
-delete_btn = Button(update, text="Delete", font=f, command=delete_to_do)
+Task_1_Update_Label = Label(update, text="Enter the task number to update:", font=f)
+Task_1_Update_Entry = Entry(update, font=f)
+Updated_Task_Label = Label(update, text="Enter the updated task description:", font=f, width=20)
+Updated_Task_Entry = Entry(update, font=f)
+update_btn = Button(update, text="Update", font=f, command=update_to_do)
 back3_btn = Button(update, text="Back", font=f, command=back3)
-Task_1_Delete_Label.pack(pady=5)
-Task_1_Delete_Entry.pack(pady=5)
-delete_btn.pack(pady=5)
+Task_1_Update_Label.pack(pady=5)
+Task_1_Update_Entry.pack(pady=5)
+Updated_Task_Label.pack(pady=5)
+Updated_Task_Entry.pack(pady=5)
+update_btn.pack(pady=5)
 back3_btn.pack(pady=5)
 update.withdraw()
 
-def close_program():
+def f9():
     if askokcancel("Quit", "Do you want to exit?"):
         root.destroy()
         view_window.destroy()
         update.destroy()
 
-root.protocol("WM_DELETE_WINDOW", close_program)
-view_window.protocol("WM_DELETE_WINDOW", close_program)
-update.protocol("WM_DELETE_WINDOW", close_program)
+root.protocol("WM_DELETE_WINDOW", f9)
+view_window.protocol("WM_DELETE_WINDOW", f9)
+update.protocol("WM_DELETE_WINDOW", f9)
 
 root.mainloop()
